@@ -27,8 +27,19 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.format.DateTimeFormatter;
+import java.time.Duration;
+import java.time.Instant;
+//import org.joda.time.DateTimeZone;
+//import org.joda.time.Period;
+//import org.joda.time.format.ISODateTimeFormat;
+//import org.joda.time.format.ISOPeriodFormat;
+//import org.joda.time.format.PeriodFormatter;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,6 +57,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.XMLConstants;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -75,13 +88,6 @@ import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
 import org.apache.xml.security.transforms.Transforms;
 import org.apache.xml.security.utils.XMLUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.joda.time.format.ISOPeriodFormat;
-import org.joda.time.format.PeriodFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -97,6 +103,7 @@ import com.onelogin.saml2.exception.XMLEntityException;
 import com.onelogin.saml2.model.SamlResponseStatus;
 import com.onelogin.saml2.model.hsm.HSM;
 
+import static java.time.Instant.now;
 
 /**
  * Util class of OneLogin's Java Toolkit.
@@ -110,8 +117,6 @@ public final class Util {
      */
 	private static final Logger LOGGER = LoggerFactory.getLogger(Util.class);
 
-    private static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis().withZoneUTC();
-	private static final DateTimeFormatter DATE_TIME_FORMAT_MILLS = ISODateTimeFormat.dateTime().withZoneUTC();
 	public static final String UNIQUE_ID_PREFIX = "ONELOGIN_";
 	public static final String RESPONSE_SIGNATURE_XPATH = "/samlp:Response/ds:Signature";
 	public static final String ASSERTION_SIGNATURE_XPATH = "/samlp:Response/saml:Assertion/ds:Signature";
@@ -1827,8 +1832,7 @@ public final class Util {
 	 * @throws IllegalArgumentException
 	 */
 	public static long parseDuration(String duration) throws IllegalArgumentException {
-		TimeZone timeZone = DateTimeZone.UTC.toTimeZone();
-		return parseDuration(duration, Calendar.getInstance(timeZone).getTimeInMillis() / 1000);
+		return parseDuration(duration, now().getEpochSecond());
 	}
 
 	/**
@@ -1844,33 +1848,24 @@ public final class Util {
 	 * @throws IllegalArgumentException
 	 */
 	public static long parseDuration(String durationString, long timestamp) throws IllegalArgumentException {
-		boolean haveMinus = false;
-
-		if (durationString.startsWith("-")) {
-			durationString = durationString.substring(1);
-			haveMinus = true;
+		try {
+			final javax.xml.datatype.Duration duration = DatatypeFactory.newInstance().newDuration(durationString);
+			// use zoned date/time in UTC for all calculations to get a consistent durationMillis across different time
+			// zones. this is not strictly correct (due to DST, leap seconds, etc) but it helps in testing.
+			final ZonedDateTime startOfPeriod = ZonedDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.of("UTC"));
+			final Duration durationMillis = Duration.ofMillis(duration.getTimeInMillis(GregorianCalendar.from(startOfPeriod)));
+			final ZonedDateTime endOfPeriod = startOfPeriod.plus(durationMillis);
+			return endOfPeriod.toInstant().getEpochSecond();
+		} catch (DatatypeConfigurationException e) {
+			throw new RuntimeException(e);
 		}
-
-		PeriodFormatter periodFormatter = ISOPeriodFormat.standard().withLocale(new Locale("UTC"));
-		Period period = periodFormatter.parsePeriod(durationString);
-
-		DateTime dt = new DateTime(timestamp * 1000, DateTimeZone.UTC);
-
-		DateTime result = null;
-		if (haveMinus) {
-			result = dt.minus(period);
-		} else {
-			result = dt.plus(period);
-		}
-		return result.getMillis() / 1000;
 	}
 
 	/**
 	 * @return the unix timestamp that matches the current time.
 	 */
 	public static Long getCurrentTimeStamp() {
-		DateTime currentDate = new DateTime(DateTimeZone.UTC);
-		return currentDate.getMillis() / 1000;
+		return now().getEpochSecond();
 	}
 
 	/**
@@ -1891,8 +1886,8 @@ public final class Util {
 			}
 
 			if (validUntil != null && !StringUtils.isEmpty(validUntil)) {
-				DateTime dt = Util.parseDateTime(validUntil);
-				long validUntilTimeInt = dt.getMillis() / 1000;
+				Instant dt = Util.parseDateTime(validUntil);
+				long validUntilTimeInt = dt.getEpochSecond();
 				if (expireTime == 0 || expireTime > validUntilTimeInt) {
 					expireTime = validUntilTimeInt;
 				}
@@ -1938,25 +1933,7 @@ public final class Util {
 	 * @return string with format yyyy-MM-ddTHH:mm:ssZ
 	 */
 	public static String formatDateTime(long timeInMillis) {
-		return DATE_TIME_FORMAT.print(timeInMillis);
-	}
-
-	/**
-	 * Create string form time In Millis with format yyyy-MM-ddTHH:mm:ssZ
-	 *
-	 * @param time
-	 * 			The time
-	 * @param millis
-	 * 			Defines if the time is in Millis
-	 *
-	 * @return string with format yyyy-MM-ddTHH:mm:ssZ
-	 */
-	public static String formatDateTime(long time, boolean millis) {
-		if (millis) {
-			return DATE_TIME_FORMAT_MILLS.print(time);
-		} else {
-			return formatDateTime(time);
-		}
+		return DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(timeInMillis));
 	}
 
 	/**
@@ -1967,15 +1944,8 @@ public final class Util {
 	 *
 	 * @return datetime
 	 */
-	public static DateTime parseDateTime(String dateTime) {
-
-		DateTime parsedData = null;
-		try {
-			parsedData = DATE_TIME_FORMAT.parseDateTime(dateTime);
-		} catch(Exception e) {
-			return DATE_TIME_FORMAT_MILLS.parseDateTime(dateTime);
-		}
-		return parsedData;
+	public static Instant parseDateTime(String dateTime) {
+ 		return Instant.parse(dateTime);
 	}
 	
 	/**
