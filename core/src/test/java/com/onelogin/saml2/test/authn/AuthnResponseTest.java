@@ -15,7 +15,7 @@ import com.onelogin.saml2.util.Util;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
-import org.joda.time.Instant;
+import java.time.Instant;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -1157,7 +1157,7 @@ public class AuthnResponseTest {
 		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("pfxa46574df-b3b0-a06a-23c8-636413198772", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2010-11-18T22:02:37Z")));
+		assertThat(notOnOrAfters, contains(Instant.parse("2010-11-18T22:02:37Z")));
 
 	}
 
@@ -1170,7 +1170,7 @@ public class AuthnResponseTest {
 		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("_519c2712648ee09a06d1f9a08e9e835715fea60267", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2055-06-07T20:17:08Z")));
+		assertThat(notOnOrAfters, contains(Instant.parse("2055-06-07T20:17:08Z")));
 
 	}
 
@@ -1187,7 +1187,7 @@ public class AuthnResponseTest {
 		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("pfx7841991c-c73f-4035-e2ee-c170c0e1d3e4", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2120-06-17T14:53:44Z"), new Instant("2010-06-17T14:53:44Z")));
+		assertThat(notOnOrAfters, contains(Instant.parse("2120-06-17T14:53:44Z"), Instant.parse("2010-06-17T14:53:44Z")));
 	}
 
 	/**
@@ -1449,7 +1449,7 @@ public class AuthnResponseTest {
 		Saml2Settings settings = new SettingsBuilder().fromFile("config/config.my.properties").build();
 		String samlResponseEncoded = Util.getFileAsString("data/responses/response1.xml.base64");
 		SamlResponse samlResponse = new SamlResponse(settings, newHttpRequest(samlResponseEncoded));
-		assertEquals(1290203857000L, samlResponse.getSessionNotOnOrAfter().getMillis());
+		assertEquals(1290203857000L, samlResponse.getSessionNotOnOrAfter().toEpochMilli());
 
 		samlResponseEncoded = Util.getFileAsString("data/responses/response2.xml.base64");
 		samlResponse = new SamlResponse(settings, newHttpRequest(samlResponseEncoded));
@@ -1457,7 +1457,7 @@ public class AuthnResponseTest {
 
 		samlResponseEncoded = Util.getFileAsString("data/responses/valid_encrypted_assertion.xml.base64");
 		samlResponse = new SamlResponse(settings, newHttpRequest(samlResponseEncoded));
-		assertEquals(2696012228000L, samlResponse.getSessionNotOnOrAfter().getMillis());
+		assertEquals(2696012228000L, samlResponse.getSessionNotOnOrAfter().toEpochMilli());
 	}
 
 	/**
@@ -3288,8 +3288,7 @@ public class AuthnResponseTest {
 	}
 	
 	private void setDateTime(String ISOTimeStamp) {
-		DateTime dateTime = ISODateTimeFormat.dateTimeNoMillis().withZoneUTC().parseDateTime(ISOTimeStamp);
-		DateTimeUtils.setCurrentMillisFixed(dateTime.toDate().getTime());
+		DateTimeUtils.setCurrentMillisFixed(Instant.parse(ISOTimeStamp).toEpochMilli());
 	}
 }
 

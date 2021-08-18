@@ -41,7 +41,7 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.signature.XMLSignatureException;
-import org.joda.time.DateTime;
+import java.time.Instant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -2057,13 +2057,13 @@ public class UtilsTest {
 	public void testParseDateTime() {
 		long time = 1386650371L;
 		String datetime = "2013-12-10T04:39:31Z";
-		DateTime parsedTime = Util.parseDateTime(datetime);
-		assertEquals(time, parsedTime.getMillis() / 1000);
+		Instant parsedTime = Util.parseDateTime(datetime);
+		assertEquals(time, parsedTime.getEpochSecond());
 		
 		// Now test if toolkit supports miliseconds
 		String datetime2 = "2013-12-10T04:39:31.120Z";
-		DateTime parsedTime2 = Util.parseDateTime(datetime2);
-		assertEquals(time, parsedTime2.getMillis() / 1000);
+		Instant parsedTime2 = Util.parseDateTime(datetime2);
+		assertEquals(time, parsedTime2.getEpochSecond());
 	}
 	
 	/**

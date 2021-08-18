@@ -1047,15 +1047,15 @@ public class SamlResponse {
 				// validate NotOnOrAfter
 				if (naAttribute != null) {
 					Instant notOnOrAfterDate = Util.parseDateTime(naAttribute.getNodeValue());
-					notOnOrAfterDate = notOnOrAfterDate.plus(Constants.ALOWED_CLOCK_DRIFT * 1000, ChronoUnit.MILLIS);
+					notOnOrAfterDate = notOnOrAfterDate.plusSeconds(Constants.ALOWED_CLOCK_DRIFT);
 					if (!notOnOrAfterDate.isAfter(Instant.now())) {
-						throw new ValidationError("Could not validate timestamp: expired. Check system clock.", ValidationError.ASSERTION_EXPIRED);
+						throw new ValidationError("CouldX not validate timestamp: expired. Check system clock.", ValidationError.ASSERTION_EXPIRED);
 					}
 				}
 				// validate NotBefore
 				if (nbAttribute != null) {
 					Instant notBeforeDate = Util.parseDateTime(nbAttribute.getNodeValue());
-					notBeforeDate = notBeforeDate.minus(Constants.ALOWED_CLOCK_DRIFT * 1000, ChronoUnit.MILLIS);
+					notBeforeDate = notBeforeDate.minusMillis(Constants.ALOWED_CLOCK_DRIFT);
 					if (notBeforeDate.isAfter(Instant.now())) {
 						throw new ValidationError("Could not validate timestamp: not yet valid. Check system clock.", ValidationError.ASSERTION_TOO_EARLY);
 					}
