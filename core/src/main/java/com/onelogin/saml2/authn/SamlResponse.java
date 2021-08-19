@@ -3,6 +3,7 @@ package com.onelogin.saml2.authn;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import com.onelogin.saml2.model.hsm.HSM;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.Instant;
+//import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -401,7 +402,10 @@ public class SamlResponse {
 						continue;
 					}
 
-					DateTime noa = Util.parseDateTime(notOnOrAfter.getNodeValue());
+// STEFAN Original Line					DateTime noa = Util.parseDateTime(notOnOrAfter.getNodeValue());
+// Workaround starts here
+					DateTime noa = new org.joda.time.Instant( Util.parseDateTime(notOnOrAfter.getNodeValue()).toEpochMilli() ).toDateTime();
+// Workaround stops here
 					noa = noa.plus(Constants.ALOWED_CLOCK_DRIFT * 1000);
 					if (noa.isEqualNow() || noa.isBeforeNow()) {
 						validationIssues.add(new SubjectConfirmationIssue(i, "SubjectConfirmationData is no longer valid"));
@@ -410,7 +414,10 @@ public class SamlResponse {
 
 					Node notBefore = subjectConfirmationDataNodes.item(c).getAttributes().getNamedItem("NotBefore");
 					if (notBefore != null) {
-						DateTime nb = Util.parseDateTime(notBefore.getNodeValue());
+// STEFAN Original Line						DateTime nb = Util.parseDateTime(notBefore.getNodeValue());
+// WOrkaorund starts here
+						DateTime nb = new org.joda.time.Instant( Util.parseDateTime(notBefore.getNodeValue()).toEpochMilli() ).toDateTime();
+// Workaround stops here
 						nb = nb.minus(Constants.ALOWED_CLOCK_DRIFT * 1000);
 						if (nb.isAfterNow()) {
 							validationIssues.add(new SubjectConfirmationIssue(i, "SubjectConfirmationData is not yet valid"));
@@ -834,7 +841,10 @@ public class SamlResponse {
 		NodeList entries = this.queryAssertion("/saml:AuthnStatement[@SessionNotOnOrAfter]");
 		if (entries.getLength() > 0) {
 			notOnOrAfter = entries.item(0).getAttributes().getNamedItem("SessionNotOnOrAfter").getNodeValue();
-			return Util.parseDateTime(notOnOrAfter);
+// STEFAN Original Line			return Util.parseDateTime(notOnOrAfter);
+// Workaorund starts here
+ 			return new org.joda.time.Instant( Util.parseDateTime(notOnOrAfter).toEpochMilli() ).toDateTime(); 
+// Workaround stops here
 		}
 		return null;
 	}
@@ -883,13 +893,13 @@ public class SamlResponse {
 	 * @throws XPathExpressionException
 	 *
 	 */
-	public List<Instant> getAssertionNotOnOrAfter() throws XPathExpressionException {
+	public List<org.joda.time.Instant> getAssertionNotOnOrAfter() throws XPathExpressionException {
 		final NodeList notOnOrAfterNodes = queryAssertion("/saml:Subject/saml:SubjectConfirmation/saml:SubjectConfirmationData");
-		final ArrayList<Instant> notOnOrAfters = new ArrayList<>();
+		final ArrayList<org.joda.time.Instant> notOnOrAfters = new ArrayList<>();
 		for (int i = 0; i < notOnOrAfterNodes.getLength(); i++) {
 			final Node notOnOrAfterAttribute = notOnOrAfterNodes.item(i).getAttributes().getNamedItem("NotOnOrAfter");
 			if (notOnOrAfterAttribute != null) {
-				notOnOrAfters.add(new Instant(notOnOrAfterAttribute.getNodeValue()));
+				notOnOrAfters.add(new org.joda.time.Instant(notOnOrAfterAttribute.getNodeValue()));
 		}}
 		return notOnOrAfters;
 	}
@@ -1053,7 +1063,10 @@ public class SamlResponse {
 				Node naAttribute = attrName.getNamedItem("NotOnOrAfter");
 				// validate NotOnOrAfter
 				if (naAttribute != null) {
-					DateTime notOnOrAfterDate = Util.parseDateTime(naAttribute.getNodeValue());
+// STEFAN Original line					DateTime notOnOrAfterDate = Util.parseDateTime(naAttribute.getNodeValue());
+// WOrkaorund starts here
+					DateTime notOnOrAfterDate = new org.joda.time.Instant( Util.parseDateTime(naAttribute.getNodeValue()) ).toDateTime();
+// workaround stops here
 					notOnOrAfterDate = notOnOrAfterDate.plus(Constants.ALOWED_CLOCK_DRIFT * 1000);
 					if (notOnOrAfterDate.isEqualNow() || notOnOrAfterDate.isBeforeNow()) {
 						throw new ValidationError("Could not validate timestamp: expired. Check system clock.", ValidationError.ASSERTION_EXPIRED);
@@ -1061,7 +1074,11 @@ public class SamlResponse {
 				}
 				// validate NotBefore
 				if (nbAttribute != null) {
-					DateTime notBeforeDate = Util.parseDateTime(nbAttribute.getNodeValue());
+// STEFAN original line					DateTime notBeforeDate = Util.parseDateTime(nbAttribute.getNodeValue());
+// workaround starts here
+					DateTime notBeforeDate = new org.joda.time.Instant( Util.parseDateTime(nbAttribute.getNodeValue()) ).toDateTime();
+// workaround stops here
+
 					notBeforeDate = notBeforeDate.minus(Constants.ALOWED_CLOCK_DRIFT * 1000);
 					if (notBeforeDate.isAfterNow()) {
 						throw new ValidationError("Could not validate timestamp: not yet valid. Check system clock.", ValidationError.ASSERTION_TOO_EARLY);
@@ -1341,7 +1358,7 @@ public class SamlResponse {
 			return null;
 		final Calendar result = Calendar.getInstance();
 		try {
-			result.setTimeInMillis(Util.parseDateTime(issueInstantString).getMillis());
+ 			result.setTimeInMillis(Util.parseDateTime(issueInstantString).toEpochMilli());
 		} catch (final IllegalArgumentException e) {
 			throw new ValidationError(
 					"The Response IssueInstant attribute is not in the expected UTC form of ISO-8601 format",
