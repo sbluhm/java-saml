@@ -446,10 +446,7 @@ public class LogoutRequest {
 				// Check NotOnOrAfter
 				if (rootElement.hasAttribute("NotOnOrAfter")) {
 					String notOnOrAfter = rootElement.getAttribute("NotOnOrAfter");
-//STEFAN: KEEP THIS					Instant notOnOrAfterDate = Util.parseDateTime(notOnOrAfter);
-//Workaround starts
-					                Instant notOnOrAfterDate = java.time.Instant.ofEpochMilli( Util.parseDateTime(notOnOrAfter).getMillis() ) ;
-//WOrkaround ends
+					Instant notOnOrAfterDate = Util.parseDateTime(notOnOrAfter);
 					if (!notOnOrAfterDate.isAfter(Instant.now())) {
 						throw new ValidationError("Could not validate timestamp: expired. Check system clock.", ValidationError.RESPONSE_EXPIRED);
 					}
@@ -574,7 +571,7 @@ public class LogoutRequest {
 			if(issueInstantString == null)
 				return null;
 			issueInstant = Calendar.getInstance();
-			issueInstant.setTimeInMillis(Util.parseDateTime(issueInstantString).getMillis());
+			issueInstant.setTimeInMillis(Util.parseDateTime(issueInstantString).toEpochMilli());
 		} catch (Exception e) {}
 		return issueInstant;
 	}
