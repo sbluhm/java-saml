@@ -27,6 +27,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -1891,7 +1892,10 @@ public final class Util {
 			}
 
 			if (validUntil != null && !StringUtils.isEmpty(validUntil)) {
-				DateTime dt = Util.parseDateTime(validUntil);
+// STEFAN original line				DateTime dt = Util.parseDateTime(validUntil);
+// workaround start
+				DateTime dt = new org.joda.time.Instant( Util.parseDateTime(validUntil).toEpochMilli() ).toDateTime(); 
+// workaround stop
 				long validUntilTimeInt = dt.getMillis() / 1000;
 				if (expireTime == 0 || expireTime > validUntilTimeInt) {
 					expireTime = validUntilTimeInt;
@@ -1967,15 +1971,8 @@ public final class Util {
 	 *
 	 * @return datetime
 	 */
-	public static DateTime parseDateTime(String dateTime) {
-
-		DateTime parsedData = null;
-		try {
-			parsedData = DATE_TIME_FORMAT.parseDateTime(dateTime);
-		} catch(Exception e) {
-			return DATE_TIME_FORMAT_MILLS.parseDateTime(dateTime);
-		}
-		return parsedData;
+	public static Instant parseDateTime(String dateTime) {
+		return Instant.parse(dateTime);
 	}
 	
 	/**
