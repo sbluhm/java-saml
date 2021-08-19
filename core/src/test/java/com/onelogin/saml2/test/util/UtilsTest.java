@@ -31,6 +31,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -2057,13 +2058,13 @@ public class UtilsTest {
 	public void testParseDateTime() {
 		long time = 1386650371L;
 		String datetime = "2013-12-10T04:39:31Z";
-		DateTime parsedTime = Util.parseDateTime(datetime);
-		assertEquals(time, parsedTime.getMillis() / 1000);
+		Instant parsedTime = Util.parseDateTime(datetime);
+		assertEquals(time, parsedTime.getEpochSecond());
 		
 		// Now test if toolkit supports miliseconds
 		String datetime2 = "2013-12-10T04:39:31.120Z";
-		DateTime parsedTime2 = Util.parseDateTime(datetime2);
-		assertEquals(time, parsedTime2.getMillis() / 1000);
+		Instant parsedTime2 = Util.parseDateTime(datetime2);
+		assertEquals(time, parsedTime2.getEpochSecond());
 	}
 	
 	/**
