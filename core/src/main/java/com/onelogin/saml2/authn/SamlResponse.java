@@ -17,7 +17,6 @@ import com.onelogin.saml2.model.hsm.HSM;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -883,13 +882,13 @@ public class SamlResponse {
 	 * @throws XPathExpressionException
 	 *
 	 */
-	public List<Instant> getAssertionNotOnOrAfter() throws XPathExpressionException {
+	public List<org.joda.time.Instant> getAssertionNotOnOrAfter() throws XPathExpressionException {
 		final NodeList notOnOrAfterNodes = queryAssertion("/saml:Subject/saml:SubjectConfirmation/saml:SubjectConfirmationData");
-		final ArrayList<Instant> notOnOrAfters = new ArrayList<>();
+		final ArrayList<org.joda.time.Instant> notOnOrAfters = new ArrayList<>();
 		for (int i = 0; i < notOnOrAfterNodes.getLength(); i++) {
 			final Node notOnOrAfterAttribute = notOnOrAfterNodes.item(i).getAttributes().getNamedItem("NotOnOrAfter");
 			if (notOnOrAfterAttribute != null) {
-				notOnOrAfters.add(new Instant(notOnOrAfterAttribute.getNodeValue()));
+				notOnOrAfters.add(new org.joda.time.Instant(notOnOrAfterAttribute.getNodeValue()));
 		}}
 		return notOnOrAfters;
 	}

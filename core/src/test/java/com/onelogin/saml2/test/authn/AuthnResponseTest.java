@@ -15,7 +15,6 @@ import com.onelogin.saml2.util.Util;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
-import org.joda.time.Instant;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -1154,10 +1153,10 @@ public class AuthnResponseTest {
 				new SettingsBuilder().fromFile("config/config.my.properties").build(),
 				newHttpRequest(Util.getFileAsString("data/responses/response1.xml.base64"))
 		);
-		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
+		final List<org.joda.time.Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("pfxa46574df-b3b0-a06a-23c8-636413198772", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2010-11-18T22:02:37Z")));
+		assertThat(notOnOrAfters, contains(new org.joda.time.Instant("2010-11-18T22:02:37Z")));
 
 	}
 
@@ -1167,10 +1166,10 @@ public class AuthnResponseTest {
 				new SettingsBuilder().fromFile("config/config.my.properties").build(),
 				newHttpRequest(Util.getFileAsString("data/responses/valid_encrypted_assertion.xml.base64"))
 		);
-		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
+		final List<org.joda.time.Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("_519c2712648ee09a06d1f9a08e9e835715fea60267", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2055-06-07T20:17:08Z")));
+		assertThat(notOnOrAfters, contains(new org.joda.time.Instant("2055-06-07T20:17:08Z")));
 
 	}
 
@@ -1184,10 +1183,10 @@ public class AuthnResponseTest {
 				settings,
 				newHttpRequest(loadSignMessageAndEncode("data/responses/invalids/invalid_subjectconfirmation_multiple_issues.xml"))
 		);
-		final List<Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
+		final List<org.joda.time.Instant> notOnOrAfters = samlResponse.getAssertionNotOnOrAfter();
 
 		assertEquals("pfx7841991c-c73f-4035-e2ee-c170c0e1d3e4", samlResponse.getAssertionId());
-		assertThat(notOnOrAfters, contains(new Instant("2120-06-17T14:53:44Z"), new Instant("2010-06-17T14:53:44Z")));
+		assertThat(notOnOrAfters, contains(new org.joda.time.Instant("2120-06-17T14:53:44Z"), new org.joda.time.Instant("2010-06-17T14:53:44Z")));
 	}
 
 	/**
